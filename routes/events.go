@@ -2,6 +2,7 @@ package routes
 
 import (
 	"danielokyere/RESTCRUD/models"
+	"danielokyere/RESTCRUD/utils"
 
 	"net/http"
 	"strconv"
@@ -53,8 +54,18 @@ func getEvents(context *gin.Context) {
 }
 
 func createEvents(context *gin.Context) {
+	token :=context.Request.Header.Get("Authorization")
+	if token == ""{
+		context.JSON(http.StatusUnauthorized, gin.H{"message":"Not authorized!"})
+		return 
+	}
+	err:=utils.VerifyJWT(token)
+	if err != nil {
+		context.JSON(http.StatusUnauthorized, gin.H{"message":"Error authenticating "})
+	}
+
 	var event models.Event
-	err := context.ShouldBindJSON(&event)
+	err = context.ShouldBindJSON(&event)
 	if err != nil {
 		context.JSON(http.StatusBadRequest, gin.H{"message": "Could not parse request data"})
 		return

@@ -3,6 +3,7 @@ package models
 import (
 	"danielokyere/RESTCRUD/db"
 	"danielokyere/RESTCRUD/utils"
+	"errors"
 )
 
 type User struct {
@@ -33,4 +34,21 @@ func (u User) Save() error {
 	userId, err := result.LastInsertId()
 	u.ID = userId
 	return err
+}
+
+func (u User) ValidateCredentials() error {
+	query := "SELECT id, password FROM users WHERE email = ?"
+	row := db.DB.QueryRow(query, u.Email)
+	var retrievedPassword string
+	err := row.Scan(&u.ID, &retrievedPassword)
+	if err != nil {
+		return errors.New("Credentials Invalid")
+	}
+
+	paswordIsValid := utils.CheckPassHash(u.Password, retrievedPassword)
+	if !paswordIsValid {
+		return errors.New("Credentials Invalid")
+	}
+
+	return nil
 }
